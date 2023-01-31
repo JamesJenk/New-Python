@@ -75,5 +75,16 @@ while True:
                 pyautogui.write(messages, interval=0.25)
 
                 pyautogui.press('enter')
+
+
                 
                 break
+
+
+sleep(1)
+
+pyautogui.hotkey('alt', 'tab')
+
+sleep(1)
+
+Popen('shutdown', shell=True)
