@@ -1,405 +1,212 @@
-#!/bin/python3
+import random
+import time
+import ast
 
-# Increase font size
+# Adjustable Variables
+NUM_DECKS = 8
+NUM_ROUNDS = 5
+HAND_DELAY = 0 # seconds
+RESHUFFLE_THRESHOLD = 52
+DATA_FILE = "data.txt"
+MAX_SPLITS = 4
 
-from random import randint
-from time import sleep
+pack = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"]
+rev_pack = {"Ace": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "Jack": 10, "Queen": 10, "King": 10}
 
-def shuffle():
+# Load history from data file
+def read_history(filename=DATA_FILE):
+    history = []
+    try:
+        with open(filename, "r") as f:
+            content = f.read().strip().split("\n\n")
+            for block in content:
+                lines = block.splitlines()
+                data = {}
+                for line in lines:
+                    if line.startswith("Player:"):
+                        data["player"] = ast.literal_eval(line[len("Player: "):])
+                    elif line.startswith("Dealer:"):
+                        data["dealer"] = ast.literal_eval(line[len("Dealer: "):])
+                    elif line.startswith("Outcome:"):
+                        data["outcome"] = line[len("Outcome: "):].strip()
+                    elif line.startswith("Action:"):
+                        data["action"] = line[len("Action: "):].strip()
+                if data:
+                    history.append(data)
+    except FileNotFoundError:
+        pass
+    return history
 
-    # List of possible cards to generate deck
+def full_card_name(card):
+    mapping = {'J': 'Jack', 'Q': 'Queen', 'K': 'King', 'A': 'Ace'}
+    return mapping.get(card, card)
 
-    pack = {
-        1 : "Ace",
-        2 : "Two",  
-        3 : "Three",
-        4 : "Four",
-        5 : "Five",
-        6 : "Six",
-        7 : "Seven",
-        8 : "Eight",
-        9 : "Nine",
-        10 : "Ten",
-        11 : "Jack",
-        12 : "Queen",
-        13 : "King",
-        }
-
-    # To create "box" which is the deck
-
-    # There is a dictionary of 13 values which is then shuffled and appended, this then is done 4 times which adds up to 52
-    # There will not be repeats of the samae card for each 13 shuffled allowing 4 of every value to be in each deck.
-
-    repeat = []
-    deck = []
-    box = []
-
-    for i in range(0, 4):
-
-        while len(repeat) < 13:
-            card = pack[randint(1, 13)]
-
-            if card in repeat:
-                None
-            
-            else:
-                deck.append(card)
-                repeat.append(card)
-
-        for i in deck:
-            box.append(i)
-
-    deck = []
-    repeat = []
-
-    return box
-    
-
-    first_sym = symbol[randint(0,1)]
-    second_sym = symbol[randint(2,3)]
-
-def showhand(deck, type = 1):
-
-    # Symbols are purely visual and not assigned as suit doesn't mean anything in blackjack
-
-    symbol = ["♥", "♦", "♣", "♠"]
-
-    # Type allows the function to be appplied to show both the dealer's and user's hands
-
-    if type == 1:
-        print("Your hand is:", end = " ")
-
-    else:
-        print("Dealer's hand is:", end = " ")
-
-    sleep(1)
-
-    # Iterates through the list of the chosen hand and prints to for visual ease
-
-    for card in deck:
-        print(symbol[randint(0, 3)], card, end = " ")
-    
-    # Function shows both hand and value for those new to blackjack, evaluate is defined later
-
-    val = evaluate(deck)
-
-    print("")
-
-    if type == 1:
-        print("Your hand value is:", val)
-
-    else:
-        print("Dealer's hand value is:", val)
-
-    sleep(1)
-
-    return None
-
-def deal(deck, deals = 1):
-
-    # Adds a card to chosen hand and then deletes card from deck
-
-    for card in range(0, int(deals)):
-        deck.append(box[0])
-        box.pop(0)
-
-    return deck
-
-def evaluate(deck = []):
-
-    # To calculate the value of your hand
-
-    val = 0
-    
-    for card in deck:
-        val += rev_pack[card]
-
-    # To check the special case of aces
-
-    if "Ace" in deck and val <= 11:
+def hand_value(cards):
+    val = sum(rev_pack[c] for c in cards)
+    if "Ace" in cards and val <= 11:
         val += 10
-
-    if "Ace" in deck and val > 21 and len(ac) > 1:
-        val -= 10
-        ac.append(1)
-
-        print(ace_count)
-
     return val
 
-def finish():
-
-    # Print statement at end of code
-
-    print("")
-    print(f"Your current balance is ${bank}")
-    print("-------------------")
-    print("Blackjack Simulator")
-
-def play(deck = [], bet = 1):
-
-    # Options to play game
-
-    while True:
-            sleep(1)
-
-            choice = input("Which do you choose?: ")
-
-            # If you choose to keep your cards this part of the programme ends and you go against the dealer
-
-            if choice == "Stand" or choice == "stand" or choice == "s" or choice == "2" or choice == "S":
-                break
-
-            # If you choose to take another card and you go over 21 this ends and you go against the dealer
-            # Otherwise continue playing
-
-            if choice == "Hit" or choice == "hit" or choice == "h" or choice == "1" or choice == "H":
-                deal(deck)
-                showhand(deck)
-                value = evaluate(deck)
-                nodub = False
-
-                if value <= 20:
-                    print("Hit or Stand?")
-
-                elif value > 21:
-                    break
-
-                else:
-                    break
-
-            if choice == "Double Down" or choice == "double down" or choice == "dd" or choice == "3" or choice == "DD" and nodub == False:
-
-                # Doubles your bet but you recieve one card and one card alone
-
-                deal(deck)
-                showhand(deck)
-                value = evaluate(deck)
-                bet *= 2
-                break
-
-            # To try and catch any cheaters attempting a double down after a hit
-
-            elif nodub == True:
-                print("You can't double down after a hit!")
-
-            else:
-                print("Your input is off.")
-                print("Try again!")
-    
-    return deck, bet
-
-def results(deck = [], bet = 1, bank = 1):
-
-    # After choices are made and assuming you didn't bust, it is the dealer's turn
-    # The dealer then hits until soft 17
-    # Then standard blackjack rules apply
-    
-    value = evaluate(deck)
-    del_val = evaluate(dealer)
-
-    if value > 21:
-        print("Bust! You lose.")
-        bank -= bet
-
-        return bank
-
-    while del_val < 17:
-
-        deal(dealer)
-        showhand(dealer, 2)
-        del_val = evaluate(dealer)
-
-    if del_val > 21:
-        print("Dealer bust! You win.")
-        bank += bet
-
-    elif value > del_val:
-        print("You win.")
-        bank += bet
-
-    elif value < del_val:
-        print("You lose.")
-        bank -= bet
-
+def basic_strategy(player_hand, dealer_card):
+    dealer_card = full_card_name(dealer_card)
+    val = hand_value(player_hand)
+    dealer_val = rev_pack[dealer_card]
+    if len(player_hand) == 2 and rev_pack[player_hand[0]] == rev_pack[player_hand[1]]:
+        return "Split"
+    if val >= 17:
+        return "Stand"
+    elif val <= 11:
+        if val == 11:
+            return "Double Down"
+        return "Hit"
+    elif 12 <= val <= 16:
+        if dealer_val >= 7:
+            return "Hit"
+        else:
+            return "Stand"
     else:
-        print("Push!")
+        return "Stand"
 
-    return bank
 
-# Reversed dictionary of deck to calculate card value
-    
-rev_pack = {
-    "Ace" : 1,
-    "Two" : 2,
-    "Three" : 3,
-    "Four": 4,
-    "Five" : 5,
-    "Six" : 6,
-    "Seven" : 7,
-    "Eight" : 8,
-    "Nine" : 9,
-    "Ten" : 10,
-    "Jack" : 10,
-    "Queen" : 10,
-    "King" : 10
-}
+def player_decision(player_hand, dealer_hand, history, explore_rate=0.2):
+    similar = [h for h in history if h["player"] == player_hand and h["dealer"] == dealer_hand]
 
-# To begin the game
+    if not similar:
+        strategy = basic_strategy(player_hand, dealer_hand[0])
+        print(f"No exact hand match found. Using basic strategy: {strategy}")
+        return strategy
 
-# cont is short for continue which is asked at the end to check if you want to keep playing
-# symbols are used for dealers hand
+    print("Found exact past hands. Analysing outcomes...")
 
-cont = 'y'
-symbol = ["♥", "♦", "♣", "♠"]
+    # Aggregate outcomes by action
+    action_stats = {}
+    for h in similar:
+        action = h["action"]
+        outcome = h["outcome"].lower()
+        if action not in action_stats:
+            action_stats[action] = {"win": 0, "push": 0, "lose": 0}
+        action_stats[action][outcome] += 1
 
-while cont == "y":
+    # Determine best action based on majority outcome (win > push > lose)
+    def outcome_score(stats):
+        # Prioritise win over push
+        if stats["win"] > stats["push"]:
+            return (stats["win"], 1, stats["push"], -stats["lose"])
+        elif stats["win"] == stats["push"]:
+            # If tie in win and push, prefer win
+            return (stats["win"], 1, stats["push"], -stats["lose"])
+        else:
+            return (stats["win"], 0, stats["push"], -stats["lose"])
 
-    print("Blackjack Simulator")
-    print("-------------------")
-    print("")
-    print("Let's play!")
-    print("")
-    print("Your bank will always start with $1")
-    print("")
+    best_action = max(action_stats, key=lambda a: outcome_score(action_stats[a]))
+    best_stats = action_stats[best_action]
 
-    # rules are a choice for first time players
+    # Check if best action is generally winning or tying
+    if best_stats["win"] + best_stats["push"] > 0:
+        print(f"Choosing historically best action: {best_action} (Wins: {best_stats['win']}, Ties: {best_stats['push']}, Losses: {best_stats['lose']})")
+        return best_action
 
-    rules = input("Do you want to see the rules? (y/n): ")
+    # If best action is losing, avoid repeating it; pick any other action or fallback
+    losing_actions = [a for a, s in action_stats.items() if s["lose"] > 0]
+    alternatives = [a for a in action_stats if a not in losing_actions]
 
-    if rules == "y":
-        print("")
-        print("Single deck blackjack.")
-        print("Deck shuffles after each hand.")
-        print("Maximum bet: $10,000.")
-        print("Minimum bet: $1.")
-        print("Dealer stands on soft 17.")
-        print("The goal of blackjack is to get as close to twenty-one as possible without going over.")
-        print("While also having a higher hand value than the dealer.")
-        print("You may only see the first of the two cards the dealer holds during play.")
-        print("You are dealt two cards and you have the options to 'Hit', 'Double Down', or 'Stand'.")
-        print("You may not split.")
-        print("Hit: You gain another card.")
-        print("Other input options for 'Hit': Hit, hit, h, H, 1")
-        print("Stand: You stay with the cards and compare to the dealer.")
-        print("Other input options for 'Stand': Stand, stand, s, S, 2")
-        print("Double Down: You get hit once and your bet doubles.")
-        print("Other input options for 'Double Down': Double Down, double down, dd, DD, 3")
+    if alternatives:
+        chosen = random.choice(alternatives)
+        print(f"Previous action(s) lost; picking alternative action: {chosen}")
+        return chosen
 
-    # Allows you to play as many loops as possible without having to see the start each time
+    # As a last fallback, use basic strategy
+    strategy = basic_strategy(player_hand, dealer_hand[0])
+    print(f"All known actions lost; using basic strategy: {strategy}")
+    return strategy
 
-    rounds = int(input("How many hands do you want to play?: "))
-    box = shuffle()
-    bank = 1
+def evaluate(hand):
+    value = sum(rev_pack[card] for card in hand)
+    if "Ace" in hand and value <= 11:
+        value += 10
+    return value
 
-    # If you go to $50 in debt the programme ends for everyone's sake
+def reshuffle():
+    return pack * 4 * NUM_DECKS
 
-    addict = False
+def deal(deck):
+    return [deck.pop(), deck.pop()]
 
-    sleep(1)
+def hit(deck, hand):
+    hand.append(deck.pop())
 
-    for i in range(0, rounds):
+def play():
+    deck = reshuffle()
+    history = read_history()
+    session = 1
+    shoe = 1
+    round_num = 0
 
-        ac = []
+    with open(DATA_FILE, "a") as f:
+        print(f"Starting Blackjack AI Simulator for {NUM_ROUNDS} rounds\n")
 
-        print("")
-        print(f"Your current balance is ${bank}")
-        print("")
+        for i in range(NUM_ROUNDS):
+            if len(deck) < RESHUFFLE_THRESHOLD:
+                deck = reshuffle()
+                shoe += 1
 
-        bet = int(input("What is your bet this round? $"))
+            round_num += 1
+            print(f"--- Round {round_num} ---")
 
-        # max bet is $10,000 min bet is $1
+            player_hands = [deal(deck)]
+            dealer = deal(deck)
+            outcomes = []
+            actions_taken = []
 
-        if bet > 10000:
-            print("Your bet is too large.")
-            bet = int(input("What is your bet this round? $"))
+            split_count = 0
 
-        elif bet < 1:
-            print("Your bet is too small.")
-            bet = int(input("What is your bet this round? $"))
+            for hand in player_hands[:]:
+                while True:
+                    action = player_decision(hand, dealer, history)
+                    actions_taken.append(action)
 
-        end = False
+                    if action == "Split" and split_count < MAX_SPLITS:
+                        if len(hand) == 2 and rev_pack[hand[0]] == rev_pack[hand[1]]:
+                            split_count += 1
+                            player_hands.remove(hand)
+                            player_hands.append([hand[0], deck.pop()])
+                            player_hands.append([hand[1], deck.pop()])
+                            break
+                        else:
+                            action = "Hit"  # fallback if not valid to split
+                    elif action == "Double Down" and len(hand) == 2:
+                        hit(deck, hand)
+                        break
+                    elif action == "Hit" and evaluate(hand) < 21:
+                        hit(deck, hand)
+                        continue
+                    else:
+                        break
 
-        # To help calculate ace value and prevent a constant deduction of 11 everytime the hand goes over 21 and there is an ace in it
+            while evaluate(dealer) < 17:
+                hit(deck, dealer)
 
-        ace_count = 0
+            for hand in player_hands:
+                player_value = evaluate(hand)
+                dealer_value = evaluate(dealer)
 
-        print("")
-        print("Great! Here is your hand:")
+                if player_value > 21:
+                    outcome = "Lose"
+                elif dealer_value > 21 or player_value > dealer_value:
+                    outcome = "Win"
+                elif player_value == dealer_value:
+                    outcome = "Push"
+                else:
+                    outcome = "Lose"
 
-        # Dealer's hand
+                f.write(f"Session: {session} Shoe: {shoe} Round: {round_num}\n")
+                f.write(f"Player: {hand}\n")
+                f.write(f"Dealer: {dealer}\n")
+                f.write(f"Outcome: {outcome}\n")
+                f.write(f"Action: {actions_taken.pop(0)}\n\n")
 
-        dealer = []
-        dealer = deal(dealer, 2)
+                print(f"Player: {hand} | Dealer: {dealer} | Outcome: {outcome} | Action: {action}\n")
+                time.sleep(HAND_DELAY)
 
-        # Dealing hand
-
-        hand = []
-        hand = deal(hand, 2)
-        ac = []
-        # Showing cards
-
-        showhand(hand)
-        print("Dealer's topcard: ", symbol[randint(0,3)], dealer[0])
-
-        # To calculate hand value
-
-        value = evaluate(deck = hand)
-
-        sleep(1)
-
-        # Dealer's value
-
-        del_val = evaluate(deck = dealer)
-
-        # To check for blackjack
-
-        if value == 21:
-            print("Blackjack! You win.")
-            bank += bet
-            finish()
-            continue
-        
-        # Standard blackjack optionsb
-
-        # Seeing the new hand after play and checking the bet wasn't doubled in a double down
-
-        hand, bet = play(hand, bet = bet)
-
-        showhand(dealer, 2)
-
-        sleep(1)
-
-        # Bank is recalculated after results finished
-
-        bank = results(bank = bank, bet = bet, deck = hand)
-
-        sleep(1)
-
-        finish()
-
-        # To help those in need
-
-        if bank <= -50:
-            print("You have a problem.")
-            print("We're cutting you off.")
-            print("However, they say ninety-nine pecent of gamblers quit before their big win.")
-            print("So run the programme again and we will gladly take more of your money.")
-
-            finish()
-
-            addict = True
-
-            break
-
-        if addict == True:
-            break
-
-        # Reshuffling after each hand
-
-        shuffle()
-
-        sleep(1)
-
-    cont = 'n'
-    cont = input("Would you like to keep playing? (y/n): ")
+if __name__ == "__main__":
+    play()
